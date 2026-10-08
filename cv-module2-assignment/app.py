@@ -1,8 +1,8 @@
 from pathlib import Path
+import csv
 
 import cv2
 import numpy as np
-import pandas as pd
 import streamlit as st
 from PIL import Image
 from streamlit_drawable_canvas import st_canvas
@@ -26,6 +26,65 @@ CSV_COLUMNS = [
     "width_error_cm",
     "height_error_cm",
 ]
+
+
+def blank_value():
+    return ""
+
+
+def read_measurements():
+    if not CSV_FILE.exists() or CSV_FILE.stat().st_size == 0:
+        return []
+
+    with CSV_FILE.open("r", newline="", encoding="utf-8") as csv_file:
+        reader = csv.DictReader(csv_file)
+        return [
+            {column: row.get(column, "") for column in CSV_COLUMNS}
+            for row in reader
+        ]
+
+
+def write_measurements(records):
+    with CSV_FILE.open("w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=CSV_COLUMNS)
+        writer.writeheader()
+        writer.writerows(records)
+
+
+def to_float(value):
+    try:
+        if value in ("", None):
+            return None
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if np.isfinite(number) else None
+
+
+def numeric_pairs(records, actual_column, estimated_column):
+    pairs = []
+    for record in records:
+        actual = to_float(record.get(actual_column))
+        estimated = to_float(record.get(estimated_column))
+        if actual is not None and actual > 0 and estimated is not None:
+            pairs.append((actual, estimated))
+    return pairs
+
+
+def markdown_table(records):
+    def clean(value):
+        text = "" if value is None else str(value)
+        return text.replace("|", "\\|").replace("\n", " ")
+
+    header = "| " + " | ".join(CSV_COLUMNS) + " |"
+    separator = "| " + " | ".join(["---"] * len(CSV_COLUMNS)) + " |"
+    rows = [
+        "| "
+        + " | ".join(clean(record.get(column, "")) for column in CSV_COLUMNS)
+        + " |"
+        for record in records
+    ]
+    return "\n".join([header, separator, *rows])
 
 st.set_page_config(
     page_title="Camera Measurement Tool",
@@ -237,12 +296,12 @@ if save_measurement:
         width_error_cm = (
             estimated_width_cm - actual_width_cm
             if actual_width_cm > 0
-            else np.nan
+            else blank_value()
         )
         height_error_cm = (
             estimated_height_cm - actual_height_cm
             if actual_height_cm > 0
-            else np.nan
+            else blank_value()
         )
 
         new_row = {
@@ -253,37 +312,19 @@ if save_measurement:
             "estimated_width_cm": estimated_width_cm,
             "estimated_height_cm": estimated_height_cm,
             "actual_width_cm": (
-                actual_width_cm if actual_width_cm > 0 else np.nan
+                actual_width_cm if actual_width_cm > 0 else blank_value()
             ),
             "actual_height_cm": (
-                actual_height_cm if actual_height_cm > 0 else np.nan
+                actual_height_cm if actual_height_cm > 0 else blank_value()
             ),
             "width_error_cm": width_error_cm,
             "height_error_cm": height_error_cm,
         }
 
-        new_df = pd.DataFrame([new_row], columns=CSV_COLUMNS)
-
         try:
-            if CSV_FILE.exists() and CSV_FILE.stat().st_size > 0:
-                try:
-                    old_df = pd.read_csv(CSV_FILE)
-                except pd.errors.EmptyDataError:
-                    old_df = pd.DataFrame(columns=CSV_COLUMNS)
-
-                for column in CSV_COLUMNS:
-                    if column not in old_df.columns:
-                        old_df[column] = np.nan
-
-                old_df = old_df[CSV_COLUMNS]
-                combined_df = pd.concat(
-                    [old_df, new_df],
-                    ignore_index=True,
-                )
-            else:
-                combined_df = new_df
-
-            combined_df.to_csv(CSV_FILE, index=False)
+            records = read_measurements()
+            records.append(new_row)
+            write_measurements(records)
 
             st.success("Measurement calculated and saved.")
 
@@ -306,29 +347,22 @@ if save_measurement:
 st.divider()
 st.subheader("Saved measurements")
 
-if CSV_FILE.exists() and CSV_FILE.stat().st_size > 0:
-    try:
-        df = pd.read_csv(CSV_FILE)
-    except pd.errors.EmptyDataError:
-        df = pd.DataFrame(columns=CSV_COLUMNS)
-else:
-    df = pd.DataFrame(columns=CSV_COLUMNS)
+records = read_measurements()
 
-if df.empty:
+if not records:
     st.info("No measurements saved yet.")
 else:
-    st.dataframe(df, use_container_width=True)
+    st.markdown(markdown_table(records))
 
-    width_valid = (
-        df["actual_width_cm"].notna()
-        & (df["actual_width_cm"] > 0)
-        & df["estimated_width_cm"].notna()
+    width_pairs = numeric_pairs(
+        records,
+        "actual_width_cm",
+        "estimated_width_cm",
     )
-
-    height_valid = (
-        df["actual_height_cm"].notna()
-        & (df["actual_height_cm"] > 0)
-        & df["estimated_height_cm"].notna()
+    height_pairs = numeric_pairs(
+        records,
+        "actual_height_cm",
+        "estimated_height_cm",
     )
 
     st.subheader("Validation error statistics")
@@ -338,11 +372,11 @@ else:
     with width_col:
         st.markdown("**Width**")
 
-        if width_valid.any():
-            actual = df.loc[width_valid, "actual_width_cm"].astype(float)
-            estimated = df.loc[width_valid, "estimated_width_cm"].astype(float)
+        if width_pairs:
+            actual = np.array([pair[0] for pair in width_pairs])
+            estimated = np.array([pair[1] for pair in width_pairs])
             errors = estimated - actual
-            abs_errors = errors.abs()
+            abs_errors = np.abs(errors)
 
             st.write(f"Measurements: {len(errors)}")
             st.write(f"MAE: {abs_errors.mean():.3f} cm")
@@ -356,11 +390,11 @@ else:
     with height_col:
         st.markdown("**Height**")
 
-        if height_valid.any():
-            actual = df.loc[height_valid, "actual_height_cm"].astype(float)
-            estimated = df.loc[height_valid, "estimated_height_cm"].astype(float)
+        if height_pairs:
+            actual = np.array([pair[0] for pair in height_pairs])
+            estimated = np.array([pair[1] for pair in height_pairs])
             errors = estimated - actual
-            abs_errors = errors.abs()
+            abs_errors = np.abs(errors)
 
             st.write(f"Measurements: {len(errors)}")
             st.write(f"MAE: {abs_errors.mean():.3f} cm")
@@ -373,7 +407,7 @@ else:
 
     st.download_button(
         "Download measurements.csv",
-        data=df.to_csv(index=False).encode("utf-8"),
+        data=CSV_FILE.read_bytes(),
         file_name="measurements.csv",
         mime="text/csv",
     )

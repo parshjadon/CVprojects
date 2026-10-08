@@ -1,11 +1,63 @@
 from pathlib import Path
 import csv
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
 import streamlit as st
 from PIL import Image
-from streamlit_drawable_canvas import st_canvas
+
+try:
+    from streamlit_drawable_canvas import st_canvas
+except ModuleNotFoundError:
+    def st_canvas(
+        fill_color,
+        stroke_width,
+        stroke_color,
+        background_image,
+        update_streamlit,
+        height,
+        width,
+        drawing_mode,
+        key,
+    ):
+        st.image(background_image, caption="Undistorted image", use_container_width=True)
+        st.warning(
+            "Drawing canvas package is not installed locally. Enter the object's "
+            "pixel width and height as they appear in the displayed image."
+        )
+        col_width, col_height = st.columns(2)
+        with col_width:
+            rect_width = st.number_input(
+                "Displayed object pixel width",
+                min_value=1,
+                max_value=int(width),
+                value=max(1, int(width * 0.25)),
+                step=1,
+                key=f"{key}_fallback_width",
+            )
+        with col_height:
+            rect_height = st.number_input(
+                "Displayed object pixel height",
+                min_value=1,
+                max_value=int(height),
+                value=max(1, int(height * 0.25)),
+                step=1,
+                key=f"{key}_fallback_height",
+            )
+
+        return SimpleNamespace(
+            json_data={
+                "objects": [
+                    {
+                        "width": rect_width,
+                        "height": rect_height,
+                        "scaleX": 1,
+                        "scaleY": 1,
+                    }
+                ]
+            }
+        )
 
 
 # ----------------------------

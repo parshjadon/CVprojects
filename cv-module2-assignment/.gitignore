@@ -1,0 +1,48 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python pack*ging files
+build/
+dist/
+*.egg-info*
+.eggs/
+
+# Testing and coverage fi*es
+.pytest_cache/
+.coverage
+htmlco*/
+
+# Streamlit local configuration*and secrets
+.streamlit/secrets.tom*
+
+# Visual Studio Code
+.vscode/
+
+#*PyCharm
+.idea/
+
+# J*pyter Notebook checkpoints*.ipynb_checkpoints/
+
+# Windows fil*s
+Thumbs.db
+Desktop.ini
+
+# macOS f*les
+.DS_*tore
+
+# Temporary files
+*.tmp
+*.te*p
+*.log
+~$*
+
+# Generated output files
+outputs/*
+!outputs/.gitkeep

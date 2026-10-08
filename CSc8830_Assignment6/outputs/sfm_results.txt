@@ -1,0 +1,76 @@
+CSc 8830 - Assignment 6 Part 2
+Planar Multi-view Reconstruction
+
+A4 physical size:
+Width = 21.0 cm
+Height = 29.7 cm
+
+Camera intrinsic matrix K:
+[[1.17693511e+03 0.00000000e+00 6.51736769e+02]
+ [0.00000000e+00 1.06395293e+03 7.91308860e+02]
+ [0.00000000e+00 0.00000000e+00 1.00000000e+00]]
+
+Distortion coefficients:
+[ 0.09860058 -0.22019163  0.          0.          0.        ]
+
+VIEW 1
+Rotation Matrix R:
+[[ 0.99917195 -0.00201175 -0.04063697]
+ [-0.00819073  0.96838349 -0.24933175]
+ [ 0.03985377  0.24945814  0.96756515]]
+
+Translation t:
+[-12.85755775  -3.51736594  31.13509385]
+
+Camera Center C:
+[ 11.5772505   -4.38660959 -31.52471492]
+
+Reprojection RMSE: 6.9761 pixels
+
+VIEW 2
+Rotation Matrix R:
+[[ 0.99744621  0.03141559 -0.06414141]
+ [ 0.00373094  0.87392108  0.48605353]
+ [ 0.07132419 -0.48505156  0.87157205]]
+
+Translation t:
+[-13.55836824 -12.63995159  44.6969663 ]
+
+Camera Center C:
+[ 10.38292687  33.1525974  -33.68258656]
+
+Reprojection RMSE: 4.2765 pixels
+
+VIEW 3
+Rotation Matrix R:
+[[ 0.91347114  0.05116058  0.40367445]
+ [-0.12651647  0.97860248  0.16226759]
+ [-0.38673512 -0.19929823  0.90039778]]
+
+Translation t:
+[-11.59005908  -9.64831403  42.85881261]
+
+Camera Center C:
+[ 25.94152175  18.57650352 -32.34576043]
+
+Reprojection RMSE: 5.6736 pixels
+
+VIEW 4
+Rotation Matrix R:
+[[ 0.87275475  0.04507081 -0.48607384]
+ [ 0.04844911  0.98281495  0.17812203]
+ [ 0.48574874 -0.17900669  0.85557277]]
+
+Translation t:
+[-10.0559504  -12.16097559  32.50485387]
+
+Camera Center C:
+[ -6.42362494  18.22380469 -30.53206472]
+
+Reprojection RMSE: 6.8897 pixels
+
+SUMMARY OF REPROJECTION ERRORS
+View 1: 6.9761 pixels
+View 2: 4.2765 pixels
+View 3: 5.6736 pixels
+View 4: 6.8897 pixels

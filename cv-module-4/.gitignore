@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+outputs/*
+!outputs/.gitkeep
+data/rgb/*
+!data/rgb/.gitkeep
+data/thermal/*
+!data/thermal/.gitkeep
